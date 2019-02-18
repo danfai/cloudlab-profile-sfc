@@ -17,10 +17,10 @@ echo
 # directory for cluster users.
 NODE_LOCAL_STORAGE_DIR=$1
 CLOUDLAB_USER=$2
-# Number of worker machines in the cluster.
-NUM_WORKER=$3
-# Number of aggregation switches in the cluster.
-NUM_AGG=$4
+# Number of SFF in the cluster.
+NUM_SFF=$3
+# Number of SF per SFF in the cluster.
+NUM_SF_PER_SFF=$4
 # Local partition on NFS server that will be exported via NFS and used as a
 # shared home directory for cluster users.
 NFS_SHARED_HOME_EXPORT_DIR=$5
@@ -70,7 +70,7 @@ apt-get --assume-yes install mosh vim tmux pdsh tree axel htop ctags whois
 echo -e "\n===== INSTALLING NFS PACKAGES ====="
 apt-get --assume-yes install nfs-kernel-server nfs-common
 echo -e "\n===== INSTALLING basic PACKAGES ====="
-apt-get --assume-yes install python2.7 python-requests openjdk-8-jre ack-grep python-minimal  iperf3
+apt-get --assume-yes install python2.7 python-requests python-minimal iperf3
 
 # create new admin user
 useradd -p `mkpasswd "test"` -d /home/"$USER_EXP" -m -g users -s /bin/bash "$USER_EXP"
@@ -116,10 +116,15 @@ chmod 644 $ssh_dir/authorized_keys
 # Add machines to /etc/hosts
 echo -e "\n===== ADDING HOSTS TO /ETC/HOSTS ====="
 hostArray=("$HOSTNAME_JUMPHOST" "$HOSTNAME_EXP_CONTROLLER")
-for i in $(seq 1 $NUM_WORKER)
+for i in $(seq 1 $NUM_SFF)
 do
-  host=$(printf "worker%02d" $i)
-  hostArray=("${hostArray[@]}" "$host")
+    host=$(printf "sff-%02d" $i)
+    hostArray=("${hostArray[@]}" "$host")
+    for j in $(seq 1 $NUM_SF_PER_SFF)
+    do
+        host=$(printf "sf-%02d-%02d" $i $j)
+        hostArray=("${hostArray[@]}" "$host")
+    done
 done
 
 for host in ${hostArray[@]}
@@ -175,12 +180,11 @@ then
   # Give it a second to start-up
   sleep 5
 
-
-
   # Use the existence of this file as a flag for other servers to know that
   # NFS is finished with its setup.
   > /local/setup-nfs-done
 fi
+
 
 echo -e "\n===== WAITING FOR NFS SERVER TO COMPLETE SETUP ====="
 # Wait until nfs is properly set up.
@@ -191,30 +195,12 @@ done
 # NFS clients setup (all servers are NFS clients).
 echo -e "\n===== SETTING UP NFS CLIENT ====="
 nfs_clan_ip=`grep "jumphost-core" /etc/hosts | cut -d$'\t' -f1`
-my_clan_ip=`grep "$(hostname --short)-tor" /etc/hosts | cut -d$'\t' -f1`
+my_clan_ip=`grep "$(hostname --short)-local" /etc/hosts | cut -d$'\t' -f1`
 mkdir $SHARED_HOME_DIR; mount -t nfs4 $nfs_clan_ip:$NFS_SHARED_HOME_EXPORT_DIR $SHARED_HOME_DIR
 echo "$nfs_clan_ip:$NFS_SHARED_HOME_EXPORT_DIR $SHARED_HOME_DIR nfs4 rw,sync,hard,intr,addr=$my_clan_ip 0 0" >> /etc/fstab
 
 mkdir $DATASETS_DIR; mount -t nfs4 $nfs_clan_ip:$NFS_DATASETS_EXPORT_DIR $DATASETS_DIR
 echo "$nfs_clan_ip:$NFS_DATASETS_EXPORT_DIR $DATASETS_DIR nfs4 rw,sync,hard,intr,addr=$my_clan_ip 0 0" >> /etc/fstab
-
-
-# jumphost specific configuration.
-if [ $(hostname --short) == "$HOSTNAME_JUMPHOST" ]
-then
-
-  chown -R $USER_EXP: "$DATASETS_DIR"
-
-#   echo -e "\n===== SETTING UP AUTOMATIC TMUX ON JUMPHOST ====="
-#   # Make tmux start automatically when logging into rcmaster
-#   cat >> /etc/profile.d/etc.sh <<EOM
-#
-# if [[ -z "\$TMUX" ]] && [ "\$SSH_CONNECTION" != "" ]
-# then
-#   tmux attach-session -t ssh_tmux || tmux new-session -s ssh_tmux
-# fi
-# EOM
-fi
 
 # Mark that setup has finished. This script is actually run again after a
 # reboot, so we need to mark that we've already setup this machine and catch

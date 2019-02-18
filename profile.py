@@ -41,44 +41,42 @@ pc.defineParameter("username", "Username",
 
 # Default the cluster size to 5 nodes (minimum requires to support a
 # replication factor of 3 and an independent coordinator).
-pc.defineParameter("num_worker", "Cluster Size (# workers)",
-        portal.ParameterType.INTEGER, 32, [],
-        "Specify the number of worker servers. Note that the total " +\
-        "number of servers in the experiment will be this number + #tor-switches/2 + 2 (one " +\
-        "additional server which acts as a jumphost and one additional " +\
-        "server which acts as experiment controller). To check " +\
-        "availability of nodes, visit " +\
-        "\"https://www.cloudlab.us/cluster-graphs.php\"")
+#pc.defineParameter("num_worker", "Cluster Size (# workers)",
+#        portal.ParameterType.INTEGER, 4, [],
+#        "Specify the number of worker servers. Note that the total " +\
+#        "number of servers in the experiment will be this number + #num_sff + 1 " +\
+#        "(one additional server which acts as a jumphost ). To check " +\
+#        "availability of nodes, visit " +\
+#        "\"https://www.cloudlab.us/cluster-graphs.php\"")
 
 #
-pc.defineParameter("num_tor", "Cluster Size (# tor)",
-        portal.ParameterType.INTEGER, 4, [],
-        "Specify the number of tor switches. Note that the total " +\
-        "number of tor swithces must be a multiple of two. " +\
-        "Worker id % #tor gives the tor of a worker" )
+pc.defineParameter("num_sff", "Number of Service Function Forwarder and sites",
+        portal.ParameterType.INTEGER, 1, [],
+        "Specify the number service functions forwarder." )
 
+pc.defineParameter("num_sf_per_sff", "Number of Hosts with service functions per sites",
+        portal.ParameterType.INTEGER, 3, [],
+        "Specify the number service functions per site." )
 
-pc.defineParameter("latency_tor", "Latency of TOR links (in ms)",
-    portal.ParameterType.INTEGER, 3, [],
-    "Specify the latency of all TOR connections. ")
-
-pc.defineParameter("latency_core", "Latency of CORE links (in ms)",
+pc.defineParameter("latency_local", "Latency of the network per site (SFF-SF communication, in ms)",
     portal.ParameterType.INTEGER, 2, [],
-    "Specify the latency of all CORE connections. ")
+    "Specify the latency of all in-site connections. (Used for SFF-SF communication)")
 
+pc.defineParameter("latency_remote", "Latency of the out of site communication (SFF-SFF, in ms)",
+    portal.ParameterType.INTEGER, 3, [],
+    "Specify the latency of all off-site connections. This will be used for SFF to SFF communications.")
 
-pc.defineParameter("bw_tor", "Link capacity of TOR links",
-    portal.ParameterType.INTEGER, 400, [],
-    "Specify the link capacity of all TOR connections. ")
+pc.defineParameter("bw_local", "Link capacity of in-site connections",
+    portal.ParameterType.INTEGER, 5000, [],
+    "Specify the link capacity of all in-site connections. (Used for SFF-SF communication). ")
 
-
-pc.defineParameter("bw_core", "Link capacity of CORE links",
-    portal.ParameterType.INTEGER, 800, [],
-    "Specify the link capacity of all CORE connections. ")
+pc.defineParameter("bw_remote", "Link capacity of off-site links",
+    portal.ParameterType.INTEGER, 2500, [],
+    "Specify the link capacity of off-site connections. This will be used for SFF to SFF communications")
 
 # Size of partition to allocate for local disk storage.
 pc.defineParameter("local_storage_size", "Size of Node Local Storage Partition",
-        portal.ParameterType.STRING, "60GB", [],
+        portal.ParameterType.STRING, "40GB", [],
         "Size of local disk partition to allocate for node-local storage.")
 
 # Size of partition to allocate for NFS shared home directories.
@@ -95,31 +93,34 @@ pc.defineParameter("dataset_urns", "datasets",
 
 params = pc.bindParameters()
 
-if params.num_tor < 2 or (params.num_tor % 2) != 0:
-    portal.context.reportError( portal.ParameterError( "You must specify the number of tor switches to be a multiple of two (and >=2)." ) )
+if params.num_sf_per_sff < 1:
+    portal.context.reportError( portal.ParameterError( "num_sf_per_sff should be >= 1." ) )
+
+if params.num_sff < 1:
+    portal.context.reportError( portal.ParameterError( "num_sff should be >= 1" ) )
 
 # Create a Request object to start building the RSpec.
 request = pc.makeRequestRSpec()
 
 # Create a dedicated network for the experiment
-tors = []
-for i in range(params.num_tor):
-    testlan = request.LAN("tor%02d" % (i+1))
+sff_lans = []
+for i in range(params.num_sff):
+    testlan = request.LAN("local_sff%02d" % (i+1))
     testlan.best_effort = True
     testlan.vlan_tagging = True
     testlan.link_multiplexing = True
     testlan.trivial_ok = False
-    testlan.bandwidth = params.bw_tor
-    testlan.latency = 0.001 * params.latency_tor
-    tors.append(testlan)
+    testlan.bandwidth = params.bw_local
+    testlan.latency = 0.001 * params.latency_local
+    sff_lans.append(testlan)
 
-core = request.LAN("core")
-core.best_effort = True
-core.vlan_tagging = True
-core.link_multiplexing = True
-core.trivial_ok = False
-core.bandwidth = params.bw_core
-core.latency = 0.001 * params.latency_core
+remote = request.LAN("remote_sff_net")
+remote.best_effort = True
+remote.vlan_tagging = True
+remote.link_multiplexing = True
+remote.trivial_ok = False
+remote.bandwidth = params.bw_remote
+remote.latency = 0.001 * params.latency_remote
 
 # Create a special network for connecting datasets to the nfs server.
 dslan = request.LAN("dslan")
@@ -149,18 +150,19 @@ for i in range(len(dataset_urns)):
 
 # Setup node names
 HOSTNAME_JUMPHOST = "jumphost"
-HOSTNAME_EXP_CONTROLLER = "expctrl"
+#HOSTNAME_EXP_CONTROLLER = "expctrl"
 
 node_local_storage_dir = "/dev/xvdca"
 
 hostnames = []
-for i in range(params.num_worker):
-    hostnames.append("worker%02d" % (i + 1))
-hostnames += [HOSTNAME_JUMPHOST,HOSTNAME_EXP_CONTROLLER]
+sffs = []
+for i in range(params.num_sff):
+    hostnames.append("sff-%02d" % (i + 1))
+    sffs.append("sff-%02d" % (i + 1))
+    for j in range(params.num_sf_per_sff):
+        hostnames.append("sf-%02d-%02d" % (i + 1) % (j + 1))
 
-aggnames = []
-for i in range(int(params.num_tor)/2):
-    aggnames.append("agg%02d" % (i + 1))
+hostnames += [HOSTNAME_JUMPHOST]
 
 # Setup the cluster one node at a time.
 for idx, host in enumerate(hostnames):
@@ -184,40 +186,24 @@ for idx, host in enumerate(hostnames):
     node.addService(pg.Execute(shell="sh",
         command="sudo /local/repository/system-setup.sh %s %s %s %s %s %s" % \
         (node_local_storage_dir, params.username,
-        params.num_worker, len(aggnames), nfs_shared_home_export_dir, nfs_datasets_export_dir)))
+        params.num_sff, params.num_sf_per_sff, nfs_shared_home_export_dir, nfs_datasets_export_dir)))
 
     # All nodes in the cluster connect to clan.
-    n_iface = node.addInterface("exp_iface")
+    n_iface = node.addInterface("local_lan")
     if (host not in [HOSTNAME_JUMPHOST, HOSTNAME_EXP_CONTROLLER]):
-        tors[idx%params.num_tor].addInterface(n_iface)
+        sff_lans[int(idx/params.num_sf_per_sff)].addInterface(n_iface)
     else:
         core.addInterface(n_iface)
+
+    # add sff-sff LAN
+    if (host in sffs):
+        rem_iface = node.addInterface("sff_lan")
+        remote_lan.addInterface(rem_iface)
 
     if (host != HOSTNAME_JUMPHOST):
         local_storage_bs = node.Blockstore(host + "_local_storage_bs",
             node_local_storage_dir)
         local_storage_bs.size = params.local_storage_size
-
-
-for idx, host in enumerate(aggnames):
-    node = request.RawPC(host)
-    node.routable_control_ip = False
-    node.hardware_type = params.hardware_type
-    node.disk_image = urn.Image(cloudlab.Utah, "emulab-ops:%s" % params.image)
-
-    node.addService(pg.Execute(shell="sh",
-        command="sudo /local/repository/agg-setup.sh %s" % \
-        (params.username)))
-
-    # All nodes in the cluster connect to clan.
-    n_iface_l = node.addInterface("c-left")
-    n_iface_r = node.addInterface("c-right")
-    n_iface_c = node.addInterface("c-core")
-
-    tors[idx*2].addInterface(n_iface_l)
-    tors[idx*2+1].addInterface(n_iface_r)
-    core.addInterface(n_iface_c)
-
 
 # Print the RSpec to the enclosing page.
 pc.printRequestRSpec(request)
