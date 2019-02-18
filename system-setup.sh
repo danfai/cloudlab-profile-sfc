@@ -196,7 +196,7 @@ done
 
 # NFS clients setup (all servers are NFS clients).
 echo -e "\n===== SETTING UP NFS CLIENT ====="
-nfs_clan_ip=`grep "jumphost" /etc/hosts | cut -d$'\t' -f1`
+nfs_clan_ip=`grep "jumphost-remote" /etc/hosts | cut -d$'\t' -f1`
 my_clan_ip=`grep "$(hostname --short)-local" /etc/hosts | cut -d$'\t' -f1`
 mkdir $SHARED_HOME_DIR; mount -t nfs4 $nfs_clan_ip:$NFS_SHARED_HOME_EXPORT_DIR $SHARED_HOME_DIR
 echo "$nfs_clan_ip:$NFS_SHARED_HOME_EXPORT_DIR $SHARED_HOME_DIR nfs4 rw,sync,hard,intr,addr=$my_clan_ip 0 0" >> /etc/fstab
@@ -210,6 +210,10 @@ echo 4 > /sys/kernel/mm/hugepages/hugepages-1048576kB/nr_hugepages
 mkdir /mnt/huge /mnt/huge_1GB
 echo "nodev /mnt/huge_1GB hugetlbfs pagesize=1GB 0 0" >> /etc/fstab
 echo "nodev /mnt/huge hugetlbfs defaults 0 0" >> /etc/fstab
+
+### store network config just in case of misconfigurations
+mkdir -p $SHARED_HOME_DIR/net
+ip a >> $SHARED_HOME_DIR/net/$(hostname --short).net
 
 # Mark that setup has finished. This script is actually run again after a
 # reboot, so we need to mark that we've already setup this machine and catch
