@@ -51,37 +51,37 @@ pc.defineParameter("username", "Username",
 
 #
 pc.defineParameter("num_sff", "Number of Service Function Forwarder and sites",
-        portal.ParameterType.INTEGER, 1, [],
+        portal.ParameterType.INTEGER, 1, None,
         "Specify the number service functions forwarder." )
 
 pc.defineParameter("num_sf_per_sff", "Number of Hosts with service functions per sites",
-        portal.ParameterType.INTEGER, 3, [],
+        portal.ParameterType.INTEGER, 3, None,
         "Specify the number service functions per site." )
 
 pc.defineParameter("latency_local", "Latency of the network per site (SFF-SF communication, in ms)",
-    portal.ParameterType.INTEGER, 2, [],
+    portal.ParameterType.LATENCY, 2, None,
     "Specify the latency of all in-site connections. (Used for SFF-SF communication)")
 
 pc.defineParameter("latency_remote", "Latency of the out of site communication (SFF-SFF, in ms)",
-    portal.ParameterType.INTEGER, 3, [],
+    portal.ParameterType.LATENCY, 3, None,
     "Specify the latency of all off-site connections. This will be used for SFF to SFF communications.")
 
 pc.defineParameter("bw_local", "Link capacity of in-site connections",
-    portal.ParameterType.INTEGER, 5000, [],
+    portal.ParameterType.BANDWIDTH, 5000, None,
     "Specify the link capacity of all in-site connections. (Used for SFF-SF communication). ")
 
 pc.defineParameter("bw_remote", "Link capacity of off-site links",
-    portal.ParameterType.INTEGER, 2500, [],
+    portal.ParameterType.BANDWIDTH, 2500, None,
     "Specify the link capacity of off-site connections. This will be used for SFF to SFF communications")
 
 # Size of partition to allocate for local disk storage.
 pc.defineParameter("local_storage_size", "Size of Node Local Storage Partition",
-        portal.ParameterType.STRING, "40GB", [],
+        portal.ParameterType.SIZE, "40GB", None,
         "Size of local disk partition to allocate for node-local storage.")
 
 # Size of partition to allocate for NFS shared home directories.
 pc.defineParameter("nfs_storage_size", "Size of NFS Shared Storage",
-        portal.ParameterType.STRING, "60GB", [],
+        portal.ParameterType.SIZE, "60GB", None,
         "Size of disk partition to allocate on NFS server.")
 
 # Datasets to connect to the cluster (shared via NFS).
