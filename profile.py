@@ -76,12 +76,12 @@ pc.defineParameter("bw_remote", "Link capacity of off-site links",
 
 # Size of partition to allocate for local disk storage.
 pc.defineParameter("local_storage_size", "Size of Node Local Storage Partition",
-        portal.ParameterType.SIZE, "40GB", None,
+        portal.ParameterType.SIZE, 40 * 1024**3, None,
         "Size of local disk partition to allocate for node-local storage.")
 
 # Size of partition to allocate for NFS shared home directories.
 pc.defineParameter("nfs_storage_size", "Size of NFS Shared Storage",
-        portal.ParameterType.SIZE, "60GB", None,
+        portal.ParameterType.SIZE, 60 * 1024**3, None,
         "Size of disk partition to allocate on NFS server.")
 
 # Datasets to connect to the cluster (shared via NFS).
