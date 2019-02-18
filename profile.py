@@ -190,7 +190,7 @@ for idx, host in enumerate(hostnames):
 
     # All nodes in the cluster connect to clan.
     n_iface = node.addInterface("local_lan")
-    if (host not in [HOSTNAME_JUMPHOST, HOSTNAME_EXP_CONTROLLER]):
+    if (host not in [HOSTNAME_JUMPHOST]):
         sff_lans[int(idx/params.num_sf_per_sff)].addInterface(n_iface)
     else:
         core.addInterface(n_iface)
