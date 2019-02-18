@@ -160,7 +160,7 @@ for i in range(params.num_sff):
     hostnames.append("sff-%02d" % (i + 1))
     sffs.append("sff-%02d" % (i + 1))
     for j in range(params.num_sf_per_sff):
-        hostnames.append("sf-%02d-%02d" % (i + 1) % (j + 1))
+        hostnames.append("sf-%02d-%02d" % ((i + 1) , (j + 1)))
 
 hostnames += [HOSTNAME_JUMPHOST]
 
