@@ -198,7 +198,7 @@ for idx, host in enumerate(hostnames):
     # add sff-sff LAN
     if (host in sffs):
         rem_iface = node.addInterface("sff_lan")
-        remote_lan.addInterface(rem_iface)
+        remote.addInterface(rem_iface)
 
     if (host != HOSTNAME_JUMPHOST):
         local_storage_bs = node.Blockstore(host + "_local_storage_bs",
