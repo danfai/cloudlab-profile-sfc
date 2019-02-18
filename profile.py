@@ -20,8 +20,10 @@ images = [ ("UBUNTU16-64-STD", "Ubuntu 16.04") ]
 
 # The possible set of node-types this cluster can be configured with. Currently
 # only m510 machines are supported.
-hardware_types = [ ("m510", "m510 (CloudLab Utah, 8-Core Intel Xeon D-1548)")
-                   #,("d430", "d430 (Emulab, 8-Core Intel Xeon E5-2630v3)")
+hardware_types = [ 
+                   ("c8220", "c8220 (CloudLab Clemson, 2x10-core Intel Xeon E5-2660 v2)")
+                   ,("m510", "m510 (CloudLab Utah, 8-Core Intel Xeon D-1548)")
+                   ,("c220g2", "c220g2 (CloudLab Wisconsin, 10-core CPUs Intel Xeon E5-2660 v3)")
                    ]
 
 # Create a portal context.
@@ -177,7 +179,7 @@ for idx, host in enumerate(hostnames):
         nfs_bs = node.Blockstore(host + "_nfs_bs", nfs_shared_home_export_dir)
         nfs_bs.size = params.nfs_storage_size
 
-        #dslan.addInterface(node.addInterface("if2"))
+        dslan.addInterface(node.addInterface("if2"))
     else:
         # NO public ipv4
         node.routable_control_ip = False
