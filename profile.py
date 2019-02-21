@@ -124,18 +124,17 @@ remote.trivial_ok = False
 remote.bandwidth = params.bw_remote
 remote.latency = 0.001 * params.latency_remote
 
+# Create array of the requested datasets
+dataset_urns = []
+if (params.dataset_urns != ""):
+    dataset_urns = params.dataset_urns.split(" ")
+
 # Create a special network for connecting datasets to the nfs server.
 if len(dataset_urns) > 0:
     dslan = request.LAN("dslan")
     dslan.best_effort = True
     dslan.vlan_tagging = True
     dslan.link_multiplexing = True
-
-
-# Create array of the requested datasets
-dataset_urns = []
-if (params.dataset_urns != ""):
-    dataset_urns = params.dataset_urns.split(" ")
 
 nfs_shared_home_export_dir = "/local/nfs"
 nfs_datasets_export_dir = "/remote"
