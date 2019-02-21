@@ -125,10 +125,11 @@ remote.bandwidth = params.bw_remote
 remote.latency = 0.001 * params.latency_remote
 
 # Create a special network for connecting datasets to the nfs server.
-dslan = request.LAN("dslan")
-dslan.best_effort = True
-dslan.vlan_tagging = True
-dslan.link_multiplexing = True
+if len(dataset_urns) > 0:
+    dslan = request.LAN("dslan")
+    dslan.best_effort = True
+    dslan.vlan_tagging = True
+    dslan.link_multiplexing = True
 
 
 # Create array of the requested datasets
@@ -179,7 +180,8 @@ for idx, host in enumerate(hostnames):
         nfs_bs = node.Blockstore(host + "_nfs_bs", nfs_shared_home_export_dir)
         nfs_bs.size = params.nfs_storage_size
 
-        dslan.addInterface(node.addInterface("if2"))
+        if len(dataset_urns) > 0:
+            dslan.addInterface(node.addInterface("if2"))
     else:
         # NO public ipv4
         node.routable_control_ip = False
