@@ -23,7 +23,8 @@ images = [ ("UBUNTU16-64-STD", "Ubuntu 16.04") ]
 hardware_types = [ 
                    ("c8220", "c8220 (CloudLab Clemson, 2x10-core Intel Xeon E5-2660 v2)")
                    ,("m510", "m510 (CloudLab Utah, 8-Core Intel Xeon D-1548)")
-                   ,("c220g2", "c220g2 (CloudLab Wisconsin, 10-core CPUs Intel Xeon E5-2660 v3)")
+                   ,("c220g2", "c220g2 (CloudLab Wisconsin, 2x10-core CPUs Intel Xeon E5-2660 v3)")
+                   ,("c220g5", "c220g5 (CloudLab Wisconsin, 2x10-core CPUs Intel Xeon Silver)")
                    ]
 
 # Create a portal context.
