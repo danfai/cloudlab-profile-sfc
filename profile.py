@@ -16,7 +16,11 @@ pc = portal.Context()
 # The possible set of base disk-images that this cluster can be booted with.
 # The second field of every tupule is what is displayed on the cloudlab
 # dashboard.
-images = [ ("UBUNTU16-64-STD", "Ubuntu 16.04") ]
+images = [
+("UBUNTU18-64-STD", "Ubuntu 18.04"),
+("UBUNTU16-64-STD", "Ubuntu 16.04"),
+("UBUNTU14-64-STD", "Ubuntu 14.04")
+]
 
 # The possible set of node-types this cluster can be configured with. Currently
 # only m510 machines are supported.
@@ -25,6 +29,7 @@ hardware_types = [
                    ,("m510", "m510 (CloudLab Utah, 8-Core Intel Xeon D-1548)")
                    ,("c220g2", "c220g2 (CloudLab Wisconsin, 2x10-core CPUs Intel Xeon E5-2660 v3)")
                    ,("c220g5", "c220g5 (CloudLab Wisconsin, 2x10-core CPUs Intel Xeon Silver)")
+                   ,("xl170", "xl170 (CloudLab Utah, 10-core CPUs Intel Xeon E5-2640v4)")
                    ]
 
 # Create a portal context.
@@ -36,23 +41,12 @@ pc.defineParameter("image", "Disk Image",
         "should be booted with.")
 
 pc.defineParameter("hardware_type", "Hardware Type",
-       portal.ParameterType.NODETYPE, hardware_types[0], hardware_types)
+       portal.ParameterType.NODETYPE, hardware_types[2], hardware_types)
 
 pc.defineParameter("username", "Username",
         portal.ParameterType.STRING, "", None,
         "Username of cloudlab account.")
 
-# Default the cluster size to 5 nodes (minimum requires to support a
-# replication factor of 3 and an independent coordinator).
-#pc.defineParameter("num_worker", "Cluster Size (# workers)",
-#        portal.ParameterType.INTEGER, 4, [],
-#        "Specify the number of worker servers. Note that the total " +\
-#        "number of servers in the experiment will be this number + #num_sff + 1 " +\
-#        "(one additional server which acts as a jumphost ). To check " +\
-#        "availability of nodes, visit " +\
-#        "\"https://www.cloudlab.us/cluster-graphs.php\"")
-
-#
 pc.defineParameter("num_sff", "Number of Service Function Forwarder and sites",
         portal.ParameterType.INTEGER, 1, None,
         "Specify the number service functions forwarder." )
@@ -61,21 +55,22 @@ pc.defineParameter("num_sf_per_sff", "Number of Hosts with service functions per
         portal.ParameterType.INTEGER, 3, None,
         "Specify the number service functions per site." )
 
-pc.defineParameter("latency_local", "Latency of the network per site (SFF-SF communication, in ms)",
-    portal.ParameterType.LATENCY, 2, None,
-    "Specify the latency of all in-site connections. (Used for SFF-SF communication)")
-
-pc.defineParameter("latency_remote", "Latency of the out of site communication (SFF-SFF, in ms)",
-    portal.ParameterType.LATENCY, 3, None,
-    "Specify the latency of all off-site connections. This will be used for SFF to SFF communications.")
-
-pc.defineParameter("bw_local", "Link capacity of in-site connections",
-    portal.ParameterType.BANDWIDTH, 5000, None,
-    "Specify the link capacity of all in-site connections. (Used for SFF-SF communication). ")
-
-pc.defineParameter("bw_remote", "Link capacity of off-site links",
-    portal.ParameterType.BANDWIDTH, 2500, None,
-    "Specify the link capacity of off-site connections. This will be used for SFF to SFF communications")
+#pc.defineParameter("latency_local", "Latency of the network per site (SFF-SF communication, in ms)",
+#        portal.ParameterType.LATENCY, 2, None,
+#        "Specify the latency of all in-site connections. (Used for SFF-SF communication)")
+#
+#pc.defineParameter("latency_remote", "Latency of the out of site communication (SFF-SFF, in ms)",
+#        portal.ParameterType.LATENCY, 3, None,
+#        "Specify the latency of all off-site connections. This will be used for SFF to SFF communications.")
+#
+#pc.defineParameter("bw_local", "Link capacity of in-site connections",
+#        portal.ParameterType.BANDWIDTH, 5000, None,
+#        "Specify the link capacity of all in-site connections. (Used for SFF-SF communication). ")
+#
+#pc.defineParameter("bw_remote", "Link capacity of off-site links",
+#        portal.ParameterType.BANDWIDTH, 2500, None,
+#        "Specify the link capacity of off-site connections. This will be used for SFF to SFF communications")
+#
 
 # Size of partition to allocate for local disk storage.
 pc.defineParameter("local_storage_size", "Size of Node Local Storage Partition",
@@ -110,20 +105,20 @@ sff_lans = []
 for i in range(params.num_sff):
     testlan = request.LAN("local_sff%02d" % (i+1))
     testlan.best_effort = True
-    testlan.vlan_tagging = True
-    testlan.link_multiplexing = True
+    #testlan.vlan_tagging = True
+    #testlan.link_multiplexing = True
     testlan.trivial_ok = False
-    testlan.bandwidth = params.bw_local
-    testlan.latency = 0.001 * params.latency_local
+    #testlan.bandwidth = params.bw_local
+    #testlan.latency = 0.001 * params.latency_local
     sff_lans.append(testlan)
 
 remote = request.LAN("remote_sff_net")
 remote.best_effort = True
-remote.vlan_tagging = True
-remote.link_multiplexing = True
+#remote.vlan_tagging = True
+#remote.link_multiplexing = True
 remote.trivial_ok = False
-remote.bandwidth = params.bw_remote
-remote.latency = 0.001 * params.latency_remote
+#remote.bandwidth = params.bw_remote
+#remote.latency = 0.001 * params.latency_remote
 
 # Create array of the requested datasets
 dataset_urns = []
@@ -189,7 +184,7 @@ for idx, host in enumerate(hostnames):
 
     node.addService(pg.Execute(shell="sh",
         command="sudo /local/repository/system-setup.sh %s %s %s %s %s %s" % \
-        (node_local_storage_dir, params.username,
+        (node_local_storage_dir, params.username
         params.num_sff, params.num_sf_per_sff, nfs_shared_home_export_dir, nfs_datasets_export_dir)))
 
     # All nodes in the cluster connect to clan.

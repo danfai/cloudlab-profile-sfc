@@ -72,7 +72,7 @@ echo -e "\n===== INSTALLING basic PACKAGES ====="
 apt-get --assume-yes install python2.7 python-requests python-minimal iperf3
 
 echo -e "\n===== INSTALLING experiment PACKAGES ====="
-apt-get --assume-yes install libnuma-dev
+apt-get --assume-yes install libnuma-dev jq
 
 # create new admin user
 useradd -p `mkpasswd "test"` -d /home/"$USER_EXP" -m -g users -s /bin/bash "$USER_EXP"
@@ -205,6 +205,21 @@ mkdir $DATASETS_DIR; mount -t nfs4 $nfs_clan_ip:$NFS_DATASETS_EXPORT_DIR $DATASE
 echo "$nfs_clan_ip:$NFS_DATASETS_EXPORT_DIR $DATASETS_DIR nfs4 rw,sync,hard,intr,addr=$my_clan_ip 0 0" >> /etc/fstab
 
 ### Hugepages for dpdk
+MAX_CPU=$[`lscpu -pSOCKET,CORE,CPU | grep -v '#' | wc -l` - 1]
+ISOLCPU="`lscpu -pCORE,CPU | grep '0,' | cut -d',' -f2 | (
+    let o=-1;
+    while read ln
+    do
+        if [ $o -gt 0 ];
+        then
+            echo -n "$[ln-1],"
+        fi
+        echo -n "$[ln + 2]-"
+        o=$ln;
+    done;)`$MAX_CPU"
+sed -e 's/GRUB_CMDLINE_LINUX_DEFAULT="/GRUB_CMDLINE_LINUX_DEFAULT="isolcpus='$ISOLCPU' default_hugepagesz=1GB hugepagesz=1G hugepages=16 iommu=pt intel_iommu=on /' -i /etc/default/grub
+grub-mkconfig > /boot/grub/grub.cfg
+
 echo 1024 > /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
 echo 4 > /sys/kernel/mm/hugepages/hugepages-1048576kB/nr_hugepages
 mkdir /mnt/huge /mnt/huge_1GB
