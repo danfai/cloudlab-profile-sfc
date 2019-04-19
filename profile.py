@@ -105,8 +105,8 @@ sff_lans = []
 for i in range(params.num_sff):
     testlan = request.LAN("local_sff%02d" % (i+1))
     testlan.best_effort = True
-    #testlan.vlan_tagging = True
-    #testlan.link_multiplexing = True
+    testlan.vlan_tagging = True
+    testlan.link_multiplexing = True
     testlan.trivial_ok = False
     #testlan.bandwidth = params.bw_local
     #testlan.latency = 0.001 * params.latency_local
@@ -114,8 +114,8 @@ for i in range(params.num_sff):
 
 remote = request.LAN("remote_sff_net")
 remote.best_effort = True
-#remote.vlan_tagging = True
-#remote.link_multiplexing = True
+remote.vlan_tagging = True
+remote.link_multiplexing = True
 remote.trivial_ok = False
 #remote.bandwidth = params.bw_remote
 #remote.latency = 0.001 * params.latency_remote
