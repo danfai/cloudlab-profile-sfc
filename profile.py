@@ -184,7 +184,7 @@ for idx, host in enumerate(hostnames):
 
     node.addService(pg.Execute(shell="sh",
         command="sudo /local/repository/system-setup.sh %s %s %s %s %s %s" % \
-        (node_local_storage_dir, params.username
+        (node_local_storage_dir, params.username,
         params.num_sff, params.num_sf_per_sff, nfs_shared_home_export_dir, nfs_datasets_export_dir)))
 
     # All nodes in the cluster connect to clan.
