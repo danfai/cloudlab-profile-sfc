@@ -210,7 +210,7 @@ ISOLCPU="`lscpu -pCORE,CPU | grep '0,' | cut -d',' -f2 | (
     let o=-1;
     while read ln
     do
-        if [ $o -gt 0 ];
+        if [ $o -gt -1 ];
         then
             echo -n "$[ln-1],"
         fi
