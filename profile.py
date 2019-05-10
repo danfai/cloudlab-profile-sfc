@@ -16,11 +16,11 @@ pc = portal.Context()
 # The possible set of base disk-images that this cluster can be booted with.
 # The second field of every tupule is what is displayed on the cloudlab
 # dashboard.
-images = [
-("UBUNTU18-64-STD", "Ubuntu 18.04"),
-("UBUNTU16-64-STD", "Ubuntu 16.04"),
-("UBUNTU14-64-STD", "Ubuntu 14.04")
-]
+#images = [
+#("UBUNTU18-64-STD", "Ubuntu 18.04"),
+#("UBUNTU16-64-STD", "Ubuntu 16.04"),
+#("UBUNTU14-64-STD", "Ubuntu 14.04")
+#]
 
 # The possible set of node-types this cluster can be configured with. Currently
 # only m510 machines are supported.
@@ -35,10 +35,10 @@ hardware_types = [
 # Create a portal context.
 pc = portal.Context()
 
-pc.defineParameter("image", "Disk Image",
-        portal.ParameterType.IMAGE, images[0], images,
-        "Specify the base disk image that all the nodes of the cluster " +\
-        "should be booted with.")
+#pc.defineParameter("image", "Disk Image",
+#        portal.ParameterType.IMAGE, images[0], images,
+#        "Specify the base disk image that all the nodes of the cluster " +\
+#        "should be booted with.")
 
 pc.defineParameter("hardware_type", "Hardware Type",
        portal.ParameterType.NODETYPE, hardware_types[2], hardware_types)
@@ -166,7 +166,7 @@ hostnames += [HOSTNAME_JUMPHOST]
 for idx, host in enumerate(hostnames):
     node = request.RawPC(host)
     node.hardware_type = params.hardware_type
-    node.disk_image = urn.Image(cloudlab.Utah, "emulab-ops:%s" % params.image)
+    #node.disk_image = urn.Image("emulab-ops:%s" % params.image)
 
     if (host == HOSTNAME_JUMPHOST):
         # public ipv4
